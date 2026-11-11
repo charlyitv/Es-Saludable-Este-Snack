@@ -1,0 +1,414 @@
+{
+  "name": "¿Es Saludable Este Snack? — Una Automatización que Verifica Nutrición",
+  "nodes": [
+    {
+      "parameters": {
+        "httpMethod": "POST",
+        "path": "nutrition-check",
+        "responseMode": "responseNode",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.webhook",
+      "typeVersion": 2.2,
+      "position": [
+        0,
+        0
+      ],
+      "id": "af03bcce-e526-451c-9882-6d82244afc52",
+      "name": "Webhook",
+      "webhookId": "2545871d-083a-4292-8d7a-850b670b7d00"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "5be4ec20-c9c9-46c4-a569-2c4987a5b9ba",
+              "leftValue": "={{ $json.body.barcode }}",
+              "rightValue": "",
+              "operator": {
+                "type": "string",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "cd693b40-c534-4c06-beef-c50fe9a4c8f8",
+              "leftValue": "={{ $json.body.barcode }}",
+              "rightValue": "^[0-9](1,14)$",
+              "operator": {
+                "type": "string",
+                "operation": "regex"
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        224,
+        0
+      ],
+      "id": "02d04864-4c42-4769-9467-62c09c0844e8",
+      "name": "emty-format"
+    },
+    {
+      "parameters": {
+        "url": "=https://world.openfoodfacts.org/api/v2/product/{{ $json.body.barcode }}.json?fields=product_name,nutriscore_grade,nutriments\n",
+        "options": {
+          "response": {
+            "response": {
+              "neverError": true
+            }
+          }
+        }
+      },
+      "type": "n8n-nodes-base.httpRequest",
+      "typeVersion": 4.5,
+      "position": [
+        448,
+        -48
+      ],
+      "id": "d0c9b215-02c4-44c0-ae42-8342fd5e9589",
+      "name": "API Call"
+    },
+    {
+      "parameters": {
+        "respondWith": "json",
+        "responseBody": "{\n  \"service\": \"SnackCheck Nutrition Check\",\n  \"description\": \"Recibe el código de barras de un alimento empaquetado y devuelve un veredicto de salud basado en Open Food Facts.\",\n  \"method\": \"POST\",\n  \"endpoint\": \"/webhook/nutrition-check\",\n  \"requiredFields\": {\n    \"barcode\": \"Código de barras numérico (EAN o UPC), como texto o número\"\n  },\n  \"example\": {\n    \"barcode\": \"3017620422003\"\n  }\n}",
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        448,
+        96
+      ],
+      "id": "bf0360f6-b936-4a4a-bd41-8de0063eeab2",
+      "name": "Error empty-format"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "e75de700-0ffe-4003-9a33-83fcdd6dd230",
+              "leftValue": "={{ $json.body.product }}",
+              "rightValue": "",
+              "operator": {
+                "type": "object",
+                "operation": "exists",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        672,
+        -48
+      ],
+      "id": "60dbb7da-159c-4898-9e88-352d7e12401b",
+      "name": "Product-exist"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        896,
+        48
+      ],
+      "id": "db64d8bf-c290-40cc-a99b-76139b783f79",
+      "name": "Respond to Webhook"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "693b6d78-aa67-40f2-a8dd-a92dd8a86b1a",
+              "name": "productName",
+              "value": "={{ $json.product.product_name }}",
+              "type": "string"
+            },
+            {
+              "id": "61ce0758-8567-4991-8ecb-a67d23986f91",
+              "name": "brands",
+              "value": "={{ $json.product.brands }}",
+              "type": "string"
+            },
+            {
+              "id": "31bdc623-8207-4c18-9b71-fe54afd501b4",
+              "name": "nutriscore",
+              "value": "={{ $json.product.nutriscore_grade }}",
+              "type": "string"
+            },
+            {
+              "id": "9e55bf01-d00e-4deb-8d39-10ac45f541b4",
+              "name": "sugars",
+              "value": "={{ $json.product.nutriments.sugars_100g }}",
+              "type": "number"
+            },
+            {
+              "id": "18a0b42e-3efd-47ee-ba0a-f54b832b9115",
+              "name": "salt",
+              "value": "={{ $json.product.nutriments.salt_100g }}",
+              "type": "number"
+            },
+            {
+              "id": "3ba4a452-57a5-4f1c-a265-5a1a99e00460",
+              "name": "fat",
+              "value": "={{ $json.product.nutriments.fat_100g }}",
+              "type": "number"
+            },
+            {
+              "id": "b68de5e9-834c-4931-aee8-0d42981ba936",
+              "name": "energyKcal",
+              "value": "={{ $json.product.nutriments['energy-kcal_100g'] }}",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        896,
+        -144
+      ],
+      "id": "e976807c-5e6c-42f9-af40-6ad0646d2546",
+      "name": "Set - Extract Product Fields"
+    },
+    {
+      "parameters": {
+        "conditions": {
+          "options": {
+            "caseSensitive": true,
+            "leftValue": "",
+            "typeValidation": "strict",
+            "version": 4
+          },
+          "conditions": [
+            {
+              "id": "66c6d2ac-c112-44df-9ba3-4825e435b67e",
+              "leftValue": "={{ $json.sugars }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "15ba21a7-ca03-4421-95f8-f4ef650a32b4",
+              "leftValue": "={{ $json.salt }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "bfb5344e-a5d1-49bf-8840-4b282545a743",
+              "leftValue": "={{ $json.fat }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            },
+            {
+              "id": "72462a08-9c87-4a30-8eb8-7bd88f38a6d9",
+              "leftValue": "={{ $json.product.energy-kcal_100g }}",
+              "rightValue": 0,
+              "operator": {
+                "type": "number",
+                "operation": "notEmpty",
+                "singleValue": true
+              }
+            }
+          ],
+          "combinator": "and"
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.if",
+      "typeVersion": 2.4,
+      "position": [
+        1040,
+        -144
+      ],
+      "id": "2085f593-e69a-4ced-9c5b-410d51f480c6",
+      "name": "Check - Nutrient Data"
+    },
+    {
+      "parameters": {
+        "options": {}
+      },
+      "type": "n8n-nodes-base.respondToWebhook",
+      "typeVersion": 1.5,
+      "position": [
+        1264,
+        -48
+      ],
+      "id": "f97c52ae-90ff-4945-a9f0-2bd53cf8435e",
+      "name": "Respond to Webhook1"
+    },
+    {
+      "parameters": {
+        "assignments": {
+          "assignments": [
+            {
+              "id": "ccb9eac3-ee39-4f39-b579-e037489b2d9a",
+              "name": "sugars",
+              "value": "={{ $json.sugars >22.5 ? 'alto' : ( $json.sugars >= 5 ? 'medio' : 'bajo' ) }}",
+              "type": "number"
+            },
+            {
+              "id": "094ee057-9b66-4973-8e7c-2de332317fa3",
+              "name": "",
+              "value": "",
+              "type": "string"
+            }
+          ]
+        },
+        "options": {}
+      },
+      "type": "n8n-nodes-base.set",
+      "typeVersion": 3.5,
+      "position": [
+        1264,
+        -176
+      ],
+      "id": "82a81183-127f-4ab6-ad19-3721ab811c4c",
+      "name": "set Extract Product Fields1"
+    }
+  ],
+  "pinData": {},
+  "connections": {
+    "Webhook": {
+      "main": [
+        [
+          {
+            "node": "emty-format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "emty-format": {
+      "main": [
+        [
+          {
+            "node": "API Call",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Error empty-format",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "API Call": {
+      "main": [
+        [
+          {
+            "node": "Product-exist",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Product-exist": {
+      "main": [
+        [
+          {
+            "node": "Set - Extract Product Fields",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Set - Extract Product Fields": {
+      "main": [
+        [
+          {
+            "node": "Check - Nutrient Data",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    },
+    "Check - Nutrient Data": {
+      "main": [
+        [
+          {
+            "node": "set Extract Product Fields1",
+            "type": "main",
+            "index": 0
+          }
+        ],
+        [
+          {
+            "node": "Respond to Webhook1",
+            "type": "main",
+            "index": 0
+          }
+        ]
+      ]
+    }
+  },
+  "active": false,
+  "settings": {
+    "executionOrder": "v1",
+    "binaryMode": "separate"
+  },
+  "versionId": "60b1a3a5-2ca7-45f4-a6dd-3949b74d49a1",
+  "meta": {
+    "instanceId": "d159aa3fdc3bf92e945b0e22dc0fb658379cb77ace6a465c6c93cd9b5a46b245"
+  },
+  "nodeGroups": [],
+  "id": "sma9iLnUPrlkEiLj",
+  "tags": []
+}
